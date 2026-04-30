@@ -4,6 +4,7 @@ import { OrbitControls } from '@react-three/drei';
 
 import Developer from '../components/Developer.jsx';
 import CanvasLoader from '../components/CanvasLoader.jsx';
+import ErrorBoundary from '../components/ErrorBoundary.jsx';
 import { workExperiences } from '../constants/index.js';
 
 const Experience = () => {
@@ -16,16 +17,17 @@ const Experience = () => {
 
         <div className="work-container">
           <div className="work-canvas">
-            <Canvas>
-              <ambientLight intensity={7} />
-              <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
-              <directionalLight position={[10, 10, 10]} intensity={1} />
-              <OrbitControls enableZoom={false} maxPolarAngle={Math.PI / 2} />
-
-              <Suspense fallback={<CanvasLoader />}>
-                <Developer position-y={-3} scale={3} animationName={animationName} />
-              </Suspense>
-            </Canvas>
+            <ErrorBoundary fallback={<div className="w-full h-full bg-black-200 rounded-lg flex items-center justify-center"><p className="text-white-500">3D view unavailable</p></div>}>
+              <Canvas>
+                <ambientLight intensity={7} />
+                <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
+                <directionalLight position={[10, 10, 10]} intensity={1} />
+                <OrbitControls enableZoom={false} maxPolarAngle={Math.PI / 2} />
+                <Suspense fallback={<CanvasLoader />}>
+                  <Developer position-y={-3} scale={3} animationName={animationName} />
+                </Suspense>
+              </Canvas>
+            </ErrorBoundary>
           </div>
 
           <div className="work-content">

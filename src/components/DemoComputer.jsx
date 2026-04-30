@@ -4,9 +4,10 @@ import * as THREE from 'three';
 
 const DemoComputer = ({ texture, ...props }) => {
   const group = useRef();
-  const { nodes, materials } = useGLTF('/models/computer.glb');
+  const { scene } = useGLTF('/models/computer.glb');
 
   const videoRef = useRef(document.createElement('video'));
+  const videoTexture = useRef(new THREE.VideoTexture(videoRef.current));
 
   useEffect(() => {
     const video = videoRef.current;
@@ -14,39 +15,31 @@ const DemoComputer = ({ texture, ...props }) => {
     video.crossOrigin = 'anonymous';
     video.loop = true;
     video.muted = true;
-    video.play();
+    video.playsInline = true;
+    video.play().catch(() => {});
+
+    const tex = videoTexture.current;
+    tex.flipY = false;
+    tex.minFilter = THREE.NearestFilter;
+    tex.magFilter = THREE.NearestFilter;
+    tex.colorSpace = THREE.SRGBColorSpace;
   }, [texture]);
 
-  const videoTexture = new THREE.VideoTexture(videoRef.current);
-  videoTexture.flipY = false;
-  videoTexture.minFilter = THREE.NearestFilter;
-  videoTexture.magFilter = THREE.NearestFilter;
-  videoTexture.generateMipmaps = false;
-  videoTexture.colorSpace = THREE.SRGBColorSpace;
+  useEffect(() => {
+    if (!scene) return;
+    scene.traverse((child) => {
+      if (child.isMesh) {
+        const name = child.name.toLowerCase();
+        if (name.includes('screen') || name.includes('monitor') || name.includes('display')) {
+          child.material = new THREE.MeshBasicMaterial({ map: videoTexture.current });
+        }
+      }
+    });
+  }, [scene, texture]);
 
   return (
     <group ref={group} {...props} dispose={null}>
-      <group name="Scene">
-        <mesh name="screen" geometry={nodes['monitor_screen_0']?.geometry} material={materials['screen'] || materials[Object.keys(materials)[0]]}>
-          <meshBasicMaterial map={videoTexture} />
-        </mesh>
-        {Object.keys(nodes)
-          .filter((key) => key !== 'Scene' && key !== 'monitor_screen_0')
-          .map((key) =>
-            nodes[key].isMesh ? (
-              <mesh
-                key={key}
-                castShadow
-                receiveShadow
-                geometry={nodes[key].geometry}
-                material={nodes[key].material}
-                position={nodes[key].position}
-                rotation={nodes[key].rotation}
-                scale={nodes[key].scale}
-              />
-            ) : null,
-          )}
-      </group>
+      <primitive object={scene} />
     </group>
   );
 };
